@@ -4,6 +4,9 @@ const urlRoute = require("./routes/url");
 const connectToMongoDB = require("./connect");
 const path = require("path");
 const staticRouter = require("./routes/staticRouter");
+const userRouter = require("./routes/user");
+const cookieParser = require("cookie-parser");
+const { restrictToLoggedInUserOnly, checkAuth } = require("./middlewares/auth");
 
 
 const app = express();
@@ -18,10 +21,13 @@ app.set("views", path.resolve('./views')) //telling express ki mere saare files 
 
 app.use(express.json()); //middleware for body reading and supporting json data
 app.use(express.urlencoded({extended: false})) // for form datas
+app.use(cookieParser());
 
-app.use('/url', urlRoute);
 
-app.use('/', staticRouter)
+
+app.use('/url',restrictToLoggedInUserOnly, urlRoute); //ye middleware sirf tabhi chalega jab req /url pe aegi. you need to be logged in to access this
+app.use('/user', userRouter);
+app.use('/', checkAuth, staticRouter);
 
 app.get('/url/:shortId', async (req, res)=>{
     const shortId = req.params.shortId
